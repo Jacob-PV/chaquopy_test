@@ -41,15 +41,3 @@ class MainActivity : AppCompatActivity() {
 }
 
 
-if (! Python.isStarted()) {
-    Python.start(AndroidPlatform(this))
-}
-val py = Python.getInstance()
-val module = py.getModule("plot")
-try {
-    val pythonInput = intArrayOf(1, 2, 3, 4)
-    val bytes = module.callAttr("main", pythonInput)
-    Log.d("ptj", bytes.toString())
-} catch (e: PyException) {
-    Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
-}

@@ -20,11 +20,15 @@ android {
             abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
         python {
+            version "3.8"
             pip {
-                install "networkx == 2.6.3"
+                install "networkx == 2.6.3" // was 2.6.3
                 install "scipy"
                 install "numpy"
                 install "torch"
+                install "pandas"
+                install "matplotlib"
+                install "scikit-learn"
             }
         }
     }
