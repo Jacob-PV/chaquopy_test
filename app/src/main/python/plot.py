@@ -281,17 +281,49 @@ def get_roc_score(emb, adj_orig, edges_pos, edges_neg):
     adj_rec = np.dot(emb, emb.T)
     preds = []
     pos = []
+    pos_loc = []
+
+    print("adj rec is", adj_rec.shape)
+
+    print("edges pos", edges_pos)
+
+    if len(edges_pos) == 0:
+        edges_pos.append([0,0])
+
     for e in edges_pos:
-        preds.append(sigmoid(adj_rec[e[0], e[1]]))
+        # print(type(e))
+        if (isinstance(e, np.int32)):
+            preds.append(sigmoid(adj_rec[0, 1]))
+            # print("e[0]", e)
+            pos.append(adj_orig[e, e])
+            pos_loc.append([e, e])
+        else:
+            preds.append(sigmoid(adj_rec[e[0], e[1]]))
+            pos.append(adj_orig[e[0], e[1]])
+            pos_loc.append([e[0], e[1]])
         # preds.append(adj_rec[e[0], e[1]])
-        pos.append(adj_orig[e[0], e[1]])
+
+        # print(type(adj_orig))
+        # print("what is this?",e[0])
+
 
     preds_neg = []
     neg = []
+
+    # if len(edges_neg) == 0:
+
     for e in edges_neg:
-        preds_neg.append(sigmoid(adj_rec[e[0], e[1]]))
+        if (isinstance(e, np.int32)):
+            preds.append(sigmoid(adj_rec[0, 1]))
+            # print("e[0]", e)
+            neg.append(adj_orig[e, e])
+            pos_loc.append([e, e])
+        else:
+            preds_neg.append(sigmoid(adj_rec[e[0], e[1]]))
+            pos.append(adj_orig[e[0], e[1]])
+            pos_loc.append([e[0], e[1]])
         # preds_neg.append(adj_rec[e[0], e[1]])
-        neg.append(adj_orig[e[0], e[1]])
+
 
     preds_all = np.hstack([preds, preds_neg])
     labels_all = np.hstack([np.ones(len(preds)), np.zeros(len(preds_neg))])
@@ -302,15 +334,16 @@ def get_roc_score(emb, adj_orig, edges_pos, edges_neg):
             preds_all[i] = 1
 
 
+    print("pos is", pos)
 
     print("label is", labels_all, " ", "preds", preds_all)
 
     roc_score = roc_auc_score(labels_all, preds_all)
-
+    # roc_score = 0
     # accuracy = accuracy_score(labels_all, preds_all)
     ap_score = average_precision_score(labels_all, preds_all)
 
-    return roc_score, ap_score, preds_all
+    return roc_score, ap_score, preds_all, pos_loc
 
 
 ####### end utils 1
@@ -803,7 +836,7 @@ for each in lst_miners:
         optimizer.step()
 
         hidden_emb = mu.data.numpy()
-        roc_curr, ap_curr, _ = get_roc_score(hidden_emb, adj_orig, val_edges, val_edges_false)
+        roc_curr, ap_curr, _, _ = get_roc_score(hidden_emb, adj_orig, val_edges, val_edges_false)
 
         print("Epoch:", '%04d' % (0 + 1), "train_loss=", "{:.5f}".format(cur_loss),
               "val_ap=", "{:.5f}".format(ap_curr),
@@ -813,7 +846,7 @@ for each in lst_miners:
         print("Optimization Finished!")
 
         print("hidden is", hidden_emb)
-        roc_score, ap_score, _ = get_roc_score(hidden_emb, adj_orig, test_edges, test_edges_false)
+        roc_score, ap_score, predicted1, pos_loc = get_roc_score(hidden_emb, adj_orig, test_edges, test_edges_false)
 
         if each_t not in sum_roc.keys():
             sum_roc[each_t] = 0
@@ -834,6 +867,17 @@ for each in lst_miners:
 
         # print("Avg till now is", dict_scores[unique_time[i]]/c)
         # print("Accuracy is", str(accuracy))
+
+        ## My additions ##
+        results = {}
+        if each_t not in results:
+            results[each_t] = [(predicted1, pos_loc)]
+        else:
+            lst = results[each_t]
+            lst.append((predicted1, pos_loc))
+            results[each_t] = lst
+        ## My additions ##
+
 
     for each_val in sum_ap.keys():
 
@@ -857,3 +901,54 @@ for each in lst_miners:
 #
 # for k, v in t_roc.values():
 #     print(v / c)
+
+
+
+####################
+### MY ADDITIONS ###
+####################
+
+conv_list = {}
+for i in range(len(locations)):
+    conv_list[i] = locations[i]
+
+print("OUTOUT", conv_list)
+print("OUTOUT", results)
+
+
+res_updated = {}
+for k, v in results.items():
+    if k == '':
+        print("came here")
+        k = '9-10'
+        # k.replace('', '9-10')
+    res_updated[k] = v
+
+final_res = {}
+
+print("nodes are: ", conv_list)
+
+for k, v in res_updated.items():
+
+    probs = v[0][0]
+    edges = v[0][1]
+
+
+
+    ind = np.where(np.max(probs))[0][0]
+    print("index is", ind)
+    print("edges is", edges)
+    print("conv list", conv_list)
+    try:
+        from_loc = conv_list[edges[ind][0]]
+        to_loc = conv_list[edges[ind][1]]
+        # e = edges[ind]
+
+        final_res[k] = (probs[ind], (from_loc, to_loc))
+    except exception as e:
+        print(e)
+
+
+print("finally contact", final_res)
+print(pd.DataFrame(final_res.items(), columns=['time', 'probs']))
+
