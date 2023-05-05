@@ -12,31 +12,23 @@ import com.chaquo.python.android.AndroidPlatform
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // binds to the activity_main layout file (currently not really used for this demo)
         setContentView(R.layout.activity_main)
 
         if (! Python.isStarted()) {
             Python.start(AndroidPlatform(this))
         }
         val py = Python.getInstance()
+        // runs the python file called plot.py in the python folder
         val module = py.getModule("plot")
 
-        findViewById<Button>(R.id.button).setOnClickListener {
-            try {
-                val pythonInput = intArrayOf(1, 2, 3, 4)
-                val bytes = module.callAttr("main", pythonInput)
-                Log.d("ptj", bytes.toString())
-//                    .toJava(ByteArray::class.java)
-//                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-//                findViewById<ImageView>(R.id.imageView).setImageBitmap(bitmap)
-//                println(bitmap.toString())
-//                currentFocus?.let {
-//                    (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
-//                        .hideSoftInputFromWindow(it.windowToken, 0)
-//                }
-            } catch (e: PyException) {
-                Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
-            }
-        }
+        // this is just a test app
+        // the result from the models are all being outputted in the logcat (nothing is being displayed
+        // or used on the app gui)
+        // NOTE: inside the python file, you can call short_data_25.csv (~1 min execution) or short_short_data_25.csv
+        // (~6 min execution)
+        // FUTURE WORK: currently changesToGraph is being run using a ptl file but GCNModelVAE is being
+        // run directly with torch on the app. It may execute faster if that is turned into a ptl file
     }
 }
 

@@ -365,7 +365,7 @@ df1 = pd.DataFrame()
 #     df1 = pd.concat([df1, node0], ignore_index=True)
 
 # df1 = pd.read_csv("data_25.csv")
-filename = join(dirname(__file__), "short_data_25.csv")
+filename = join(dirname(__file__), "short_short_data_25.csv")
 df1 = pd.read_csv(filename)
 sum_ap = {}
 sum_roc = {}
@@ -950,5 +950,5 @@ for k, v in res_updated.items():
 
 
 print("finally contact", final_res)
-print(pd.DataFrame(final_res.items(), columns=['time', 'probs']))
-
+final_df = pd.DataFrame(final_res.items(), columns=['time', 'probs'])
+print(final_df)
